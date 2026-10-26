@@ -19,6 +19,8 @@ jobs:
           # Write the private key from GitHub Secrets to a file
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/mykey.pem
           chmod 600 ~/.ssh/mykey.pem
+          echo "=== KEY FINGERPRINT ==="
+          ssh-keygen -l -E md5 -f ~/.ssh/mykey.pem
           # Trust the EC2 server's host key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
