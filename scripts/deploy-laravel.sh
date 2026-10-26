@@ -25,7 +25,7 @@ host="${server#*@}"
 [ -f "${src}artisan" ] || fail "${src}artisan not found. Is this a Laravel project?"
 
 # Detect PHP-FPM service on the target (php8.3-fpm, php8.5-fpm, ...)
-php_fpm="$(ssh "$server" "php -r 'echo \"php\".PHP_MAJOR_VERSION.\".\".PHP_MINOR_VERSION.\"-fpm\";'" 2>/dev/null)"
+php_fpm="$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 "$server" "php -r 'echo \"php\".PHP_MAJOR_VERSION.\".\".PHP_MINOR_VERSION.\"-fpm\";'")"
 [ -n "$php_fpm" ] || fail "could not detect PHP-FPM service on $server"
 
 echo "==> 1/5 Copying code to $server:$dest"
