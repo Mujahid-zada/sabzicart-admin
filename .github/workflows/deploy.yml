@@ -16,16 +16,19 @@ jobs:
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          # Write the private key from GitHub Secrets to a file
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/mykey.pem
           chmod 600 ~/.ssh/mykey.pem
-          echo "=== KEY FINGERPRINT ==="
-          ssh-keygen -l -E md5 -f ~/.ssh/mykey.pem
+          
+          # Tell SSH to always use this key
+          echo "Host *" >> ~/.ssh/config
+          echo "  IdentityFile ~/.ssh/mykey.pem" >> ~/.ssh/config
+          echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+          chmod 600 ~/.ssh/config
+          
           # Trust the EC2 server's host key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run deploy script
         run: |
           chmod +x scripts/deploy-laravel.sh
-          # Run the script, passing the user and host from secrets
           ./scripts/deploy-laravel.sh ubuntu@${{ secrets.EC2_HOST }}
