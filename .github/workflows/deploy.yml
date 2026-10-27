@@ -1,4 +1,4 @@
-name: Deploy to AWS
+name: Test and Deploy to AWS
 
 on:
   push:
@@ -13,19 +13,36 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # --- CI: SETUP PHP & RUN TESTS ---
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, xml, curl, zip, sqlite3, bcmath, intl
+
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Tests
+        run: php artisan test
+
+      # --- CD: DEPLOY TO AWS ---
       - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" | base64 -d > ~/.ssh/mykey.pem
           chmod 600 ~/.ssh/mykey.pem
           
-          # Tell SSH to always use this key
           echo "Host *" >> ~/.ssh/config
           echo "  IdentityFile ~/.ssh/mykey.pem" >> ~/.ssh/config
           echo "  StrictHostKeyChecking no" >> ~/.ssh/config
           chmod 600 ~/.ssh/config
           
-          # Trust the EC2 server's host key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
       - name: Run deploy script
